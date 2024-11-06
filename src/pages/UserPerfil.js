@@ -26,6 +26,7 @@ const UserPerfil = () => {
             <div className="user-profile">
                 <img src={user.profilePicture} alt="Foto de perfil" className="profile-picture" />
                 <h2>{user.name}</h2>
+                <img src="../assets/logo-subir-video.svg" alt="subida de videos" className="img_subida" />
                 <input type="file" accept="video/*" onChange={handleVideoUpload} />
                 <button onClick={handleVideoSubmit}>Subir Video</button>
             </div>
