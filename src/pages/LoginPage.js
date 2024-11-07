@@ -4,19 +4,35 @@ import './LoginPage.css';
 import ReactModal from 'react-modal';
 import { BsPerson, BsEnvelope, BsLock } from 'react-icons/bs';
 
-
 const LoginPage = () => {
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPasswordResetModalOpen, setIsPasswordResetModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+  };
 
   const handleLogin = async () => {
     setErrorMessage('');
     setSuccessMessage('');
+
+    if (!email || !password) {
+      setErrorMessage("Por favor, completa todos los campos.");
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setErrorMessage("Por favor, introduce un correo electrónico válido.");
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
@@ -41,6 +57,17 @@ const LoginPage = () => {
   const handleRegister = async () => {
     setErrorMessage('');
     setSuccessMessage('');
+
+    if (!name || !lastName || !email || !password) {
+      setErrorMessage("Por favor, completa todos los campos.");
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setErrorMessage("Por favor, introduce un correo electrónico válido.");
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:5000/api/register', {
         method: 'POST',
@@ -62,6 +89,41 @@ const LoginPage = () => {
     }
   };
 
+  const handlePasswordReset = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!email) {
+      setErrorMessage("Por favor, introduce tu correo electrónico.");
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setErrorMessage("Por favor, introduce un correo electrónico válido.");
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setSuccessMessage(data.message);
+        closePasswordResetModal(); // Cierra la modal después de enviar el enlace
+      } else {
+        setErrorMessage(data.message || "Error al enviar el enlace de restablecimiento.");
+      }
+    } catch (error) {
+      setErrorMessage("Error en la solicitud de restablecimiento de contraseña.");
+    }
+  };
+
   const openModal = () => {
     setIsModalOpen(true);
     setName('');
@@ -71,6 +133,8 @@ const LoginPage = () => {
   };
 
   const closeModal = () => setIsModalOpen(false);
+  const openPasswordResetModal = () => setIsPasswordResetModalOpen(true);
+  const closePasswordResetModal = () => setIsPasswordResetModalOpen(false);
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
@@ -123,6 +187,11 @@ const LoginPage = () => {
             </a>
           </span>
         </div>
+        <div className="text-center mt-2">
+          <a href="#" onClick={openPasswordResetModal} className="text-primary">
+            ¿Olvidaste tu contraseña?
+          </a>
+        </div>
 
         {/* Modal de registro */}
         <ReactModal
@@ -131,7 +200,7 @@ const LoginPage = () => {
           contentLabel="Registro"
           className="Modal"
           overlayClassName="Overlay"
-          ariaHideApp={false} 
+          ariaHideApp={false}
         >
           <h2 className="text-center">Registrarse</h2>
           {errorMessage && <p className="alert alert-danger">{errorMessage}</p>}
@@ -202,22 +271,58 @@ const LoginPage = () => {
                 placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-              />
+                />
+              </div>
             </div>
-          </div>
-
-          <div className="d-flex justify-content-between">
-            <button onClick={handleRegister} className="btn btn-success">
+  
+            <button onClick={handleRegister} className="btn btn-primary w-100">
               Registrarse
             </button>
-            <button onClick={closeModal} className="btn btn-danger">
-              Cancelar
+            <button onClick={closeModal} className="btn btn-secondary w-100 mt-2">
+              Cerrar
             </button>
-          </div>
-        </ReactModal>
+          </ReactModal>
+  
+          {/* Modal para restablecer contraseña */}
+          <ReactModal
+            isOpen={isPasswordResetModalOpen}
+            onRequestClose={closePasswordResetModal}
+            contentLabel="Restablecer Contraseña"
+            className="Modal"
+            overlayClassName="Overlay"
+            ariaHideApp={false}
+          >
+            <h2 className="text-center">Restablecer Contraseña</h2>
+            {errorMessage && <p className="alert alert-danger">{errorMessage}</p>}
+            {successMessage && <p className="alert alert-success">{successMessage}</p>}
+  
+            <div className="form-group mb-3">
+              <label htmlFor="resetEmail">Correo Electrónico</label>
+              <div className="input-group">
+                <div className="input-group-prepend">
+                  <span className="input-group-text"><BsEnvelope /></span>
+                </div>
+                <input
+                  type="email"
+                  id="resetEmail"
+                  className="form-control"
+                  placeholder="Introduce tu correo electrónico"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
+  
+            <button onClick={handlePasswordReset} className="btn btn-primary w-100">
+              Enviar Enlace de Restablecimiento
+            </button>
+            <button onClick={closePasswordResetModal} className="btn btn-secondary w-100 mt-2">
+              Cerrar
+            </button>
+          </ReactModal>
+        </div>
       </div>
-    </div>
-  );
-};
-
-export default LoginPage;
+    );
+  };
+  
+  export default LoginPage;
